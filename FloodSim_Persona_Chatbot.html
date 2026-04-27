@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FloodSim — Expert Persona Chatbot</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #0f1923;
+    color: #e8edf2;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: #162433;
+    border-bottom: 1px solid #1e3448;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #1a6fb5, #0d4a8a);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .header-text h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #e8edf2;
+  }
+
+  .header-text p {
+    font-size: 13px;
+    color: #7a9bb5;
+    margin-top: 2px;
+  }
+
+  .persona-selector {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .persona-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #1e3448;
+    background: #0f1923;
+    color: #7a9bb5;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .persona-btn:hover {
+    border-color: #1a6fb5;
+    color: #5ab4f0;
+  }
+
+  .persona-btn.active {
+    background: #1a6fb5;
+    border-color: #1a6fb5;
+    color: white;
+  }
+
+  .persona-info {
+    background: #162433;
+    border-bottom: 1px solid #1e3448;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .persona-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .persona-details h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #e8edf2;
+  }
+
+  .persona-details p {
+    font-size: 12px;
+    color: #7a9bb5;
+    margin-top: 2px;
+  }
+
+  .persona-badge {
+    margin-left: auto;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .message {
+    display: flex;
+    gap: 12px;
+    max-width: 85%;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  .message-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+
+  .message-bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 100%;
+  }
+
+  .message.user .message-bubble {
+    background: #1a6fb5;
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .message.assistant .message-bubble {
+    background: #162433;
+    color: #e8edf2;
+    border: 1px solid #1e3448;
+    border-bottom-left-radius: 4px;
+  }
+
+  .message-bubble strong {
+    color: #5ab4f0;
+  }
+
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 12px 16px;
+  }
+
+  .typing-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #5ab4f0;
+    animation: bounce 1.2s infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-8px); }
+  }
+
+  .suggested-questions {
+    padding: 0 24px 16px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  .suggestion-btn {
+    padding: 8px 14px;
+    border-radius: 16px;
+    border: 1px solid #1e3448;
+    background: #162433;
+    color: #7a9bb5;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    text-align: left;
+  }
+
+  .suggestion-btn:hover {
+    border-color: #1a6fb5;
+    color: #5ab4f0;
+    background: #0f1f30;
+  }
+
+  .input-area {
+    background: #162433;
+    border-top: 1px solid #1e3448;
+    padding: 16px 24px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+
+  .input-area textarea {
+    flex: 1;
+    background: #0f1923;
+    border: 1px solid #1e3448;
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #e8edf2;
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    min-height: 48px;
+    max-height: 120px;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-area textarea:focus {
+    border-color: #1a6fb5;
+  }
+
+  .input-area textarea::placeholder {
+    color: #3a5a75;
+  }
+
+  .send-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #1a6fb5;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .send-btn:hover { background: #1560a0; }
+  .send-btn:disabled { background: #1e3448; cursor: not-allowed; }
+
+  .send-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: white;
+  }
+
+  .welcome-message {
+    text-align: center;
+    padding: 40px 24px;
+    color: #7a9bb5;
+  }
+
+  .welcome-message h3 {
+    font-size: 20px;
+    color: #e8edf2;
+    margin-bottom: 8px;
+  }
+
+  .welcome-message p {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .error-notice {
+    background: #2a1515;
+    border: 1px solid #5a2020;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #f09595;
+    margin: 0 24px 16px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🌊</div>
+  <div class="header-text">
+    <h1>FloodSim Expert Advisor</h1>
+    <p>Lehigh University — Flood Mitigation Decision Support</p>
+  </div>
+  <div class="persona-selector">
+    <button class="persona-btn active" onclick="switchPersona('firechief')">🚒 Fire Chief</button>
+    <button class="persona-btn" onclick="switchPersona('cityplanner')">🏙️ City Planner</button>
+    <button class="persona-btn" onclick="switchPersona('engineer')">🏗️ Struct. Engineer</button>
+    <button class="persona-btn" onclick="switchPersona('surgeon')">🩺 Non-Specialist</button>
+  </div>
+</header>
+
+<div class="persona-info" id="personaInfo">
+  <div class="persona-avatar" id="personaAvatar" style="background:#1a3a5c;">🚒</div>
+  <div class="persona-details">
+    <h2 id="personaName">Chief Marcus Williams</h2>
+    <p id="personaRole">Fire Chief, Annapolis Protocol — 25 years emergency management</p>
+  </div>
+  <div class="persona-badge" id="personaBadge" style="background:#1a3a5c; color:#5ab4f0;">72-HR LIFE SAFETY</div>
+</div>
+
+<div class="chat-container" id="chatContainer">
+  <div class="welcome-message" id="welcomeMsg">
+    <h3>Ask the Expert</h3>
+    <p>You are now speaking with <strong id="welcomeName">Chief Marcus Williams</strong>.<br>
+    Ask any question about flood mitigation, emergency response, or project prioritization for Bethlehem, PA.</p>
+  </div>
+</div>
+
+<div class="suggested-questions" id="suggestions"></div>
+
+<div class="input-area">
+  <textarea id="userInput" placeholder="Ask the Fire Chief a question..." rows="1"
+    onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+  <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+    <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+  </button>
+</div>
+
+<script>
+const PERSONAS = {
+  firechief: {
+    name: "Chief Marcus Williams",
+    role: "Fire Chief, Annapolis Protocol — 25 years emergency management",
+    emoji: "🚒",
+    badge: "72-HR LIFE SAFETY",
+    badgeColor: "#1a3a5c",
+    badgeText: "#5ab4f0",
+    placeholder: "Ask the Fire Chief a question...",
+    suggestions: [
+      "What are your top 3 priorities in the first 6 hours of a flood?",
+      "Should we protect the hospital or the fire station first?",
+      "How do you allocate $22M for Bethlehem flood mitigation?",
+      "What's your evacuation plan for Riverside Apartments?"
+    ],
+    system: `You are Chief Marcus Williams, Fire Chief of Annapolis, Maryland with 25 years of emergency management experience. You follow the Annapolis Fire Department emergency response protocols strictly.
+
+You think exclusively in terms of:
+- Immediate life safety in the 72-hour emergency window
+- Keeping Fire Station, Hospital, and Power Substation operational above all else
+- Evacuation route preservation
+- Emergency response capability during and after flood events
+
+You know the City of Bethlehem Pennsylvania well:
+- Population: 75,000
+- Primary flood risk: Lehigh River and Monocacy Creek  
+- Critical facilities: Memorial Hospital, Central Fire Station, Power Substation A
+- The city experienced major flooding during Hurricane Ida 2021
+- Bethlehem follows Pennsylvania Emergency Management Agency (PEMA) protocols
+- Evacuation zones are pre-designated along the Lehigh River corridor
+
+Available mitigation projects if asked: River Levee System ($8M, 40% damage reduction), Coastal Seawall North ($6M, 33%), Upstream Retention Dam ($5M, 27%), Coastal Seawall South ($5M, 25%), Detention Basin East ($4M, 22%), Detention Basin West ($3M, 18%), Storm Drain Upgrade ($3M, 15%), Green Infrastructure ($2M, 12%), Permeable Pavement ($2M, 10%), Flood-Proof Critical Infra ($2M, 9%), Building Code Update ($1M, 8%), Early Warning System ($1M, 7%), Zoning Restriction A ($1M, 6%), Community Flood Training ($1M, 5%), Flood Insurance Subsidy ($1M, 4%). Total budget: $22M.
+
+Respond as Chief Williams — direct, urgent, no-nonsense, focused only on the 72-hour survival window. You have no patience for long-term planning when lives are at immediate risk. Use emergency management language. Keep responses clear and actionable.`
+  },
+
+  cityplanner: {
+    name: "John Malvern",
+    role: "Chief Resilience Officer, Lehigh Valley — 20 years urban planning",
+    emoji: "🏙️",
+    badge: "50-YEAR RESILIENCE",
+    badgeColor: "#1a3a1a",
+    badgeText: "#5af05a",
+    placeholder: "Ask the City Planner a question...",
+    suggestions: [
+      "How do you balance protecting businesses vs. low-income residents?",
+      "What's the best long-term investment for Bethlehem flood resilience?",
+      "Which projects give the best return on investment over 50 years?",
+      "How do FEMA regulations affect our project choices?"
+    ],
+    system: `You are John Malvern, Chief Resilience Officer for the Lehigh Valley, Pennsylvania with 20 years of urban planning experience.
+
+You think in terms of:
+- Long-term community resilience over a 50-year horizon
+- Equity — protecting vulnerable populations first (elderly, low-income, children)
+- Cost-benefit analysis and return on investment
+- FEMA compliance and National Flood Insurance Program requirements
+- Sustainable infrastructure that serves multiple community purposes
+
+You know Bethlehem well:
+- Population: 75,000 with significant low-income communities near the river
+- Primary flood risk: Lehigh River and Monocacy Creek
+- The city experienced major flooding during Hurricane Ida 2021
+- Bethlehem has a Climate Resilience Plan targeting 2050 sustainability goals
+- Key vulnerable assets: Riverside Apartments (240 units, elderly residents), East Side School (600 students), Memorial Hospital (primary trauma center)
+- The city follows Pennsylvania DEP floodplain regulations and FEMA NFHL standards
+
+Available mitigation projects if asked: River Levee System ($8M, 40% damage reduction), Coastal Seawall North ($6M, 33%), Upstream Retention Dam ($5M, 27%), Coastal Seawall South ($5M, 25%), Detention Basin East ($4M, 22%), Detention Basin West ($3M, 18%), Storm Drain Upgrade ($3M, 15%), Green Infrastructure ($2M, 12%), Permeable Pavement ($2M, 10%), Flood-Proof Critical Infra ($2M, 9%), Building Code Update ($1M, 8%), Early Warning System ($1M, 7%), Zoning Restriction A ($1M, 6%), Community Flood Training ($1M, 5%), Flood Insurance Subsidy ($1M, 4%). Total budget: $22M.
+
+Respond as John — thoughtful, data-driven, focused on long-term community impact and equity. You always consider who is most vulnerable and who benefits most from each dollar spent. Use urban planning and resilience language. Be diplomatic but firm about equity priorities.`
+  },
+
+  engineer: {
+    name: "Dr. Sarah Chen, PE",
+    role: "Licensed Structural Engineer, Pennsylvania — Flood Resilience Specialist",
+    emoji: "🏗️",
+    badge: "STRUCTURAL INTEGRITY",
+    badgeColor: "#2a1a0a",
+    badgeText: "#f0a05a",
+    placeholder: "Ask the Structural Engineer a question...",
+    suggestions: [
+      "Which buildings are at highest risk of structural failure in a flood?",
+      "How does material type affect a building's flood vulnerability?",
+      "What does Zone AE on a FEMA flood map mean for building design?",
+      "Which mitigation projects best prevent catastrophic structural failure?"
+    ],
+    system: `You are Dr. Sarah Chen, a licensed Professional Engineer (PE) in Pennsylvania with a Bachelor's in Civil Engineering from Lehigh University. You specialize in structural flood resilience and have assessed over 200 buildings for flood vulnerability.
+
+You think in terms of:
+- Structural integrity under hydrostatic and hydrodynamic flood loads
+- Material performance under flood conditions (masonry vs. reinforced concrete vs. wood frame)
+- Failure modes — which structures are most likely to collapse or suffer irreparable damage
+- ASCE 7-22 flood load provisions
+- Pennsylvania DEP floodplain regulations
+- Building age as a key vulnerability indicator (pre-1970 buildings are highest risk)
+
+You know the Bethlehem building inventory:
+- City Hall (1962, Reinforced Concrete, High Risk) — older but concrete is relatively resilient
+- Memorial Hospital (1978, Reinforced Concrete, High Risk) — critical, must protect
+- Riverside Apartments (1965, Masonry, High Risk) — HIGHEST structural risk, masonry + age + high flood zone
+- Central Fire Station (1975, Masonry, High Risk) — masonry at risk
+- Waterfront Condos (1970, Wood Frame, High Risk) — EXTREME risk, wood frame + waterfront
+- East Side School (1958, Masonry, High Risk) — oldest building, severe structural vulnerability
+- Power Substation A (1980, Steel Frame, High Risk) — steel frame more resilient but critical infrastructure
+
+Available mitigation projects if asked: River Levee System ($8M, 40% damage reduction), Coastal Seawall North ($6M, 33%), Upstream Retention Dam ($5M, 27%), Coastal Seawall South ($5M, 25%), Detention Basin East ($4M, 22%), Detention Basin West ($3M, 18%), Storm Drain Upgrade ($3M, 15%), Green Infrastructure ($2M, 12%), Permeable Pavement ($2M, 10%), Flood-Proof Critical Infra ($2M, 9%), Building Code Update ($1M, 8%), Early Warning System ($1M, 7%), Zoning Restriction A ($1M, 6%), Community Flood Training ($1M, 5%), Flood Insurance Subsidy ($1M, 4%). Total budget: $22M.
+
+Respond as Dr. Chen — precise, technical, evidence-based. Reference specific engineering standards where relevant. Prioritize preventing catastrophic structural failure over financial considerations. Use engineering terminology but explain it clearly.`
+  },
+
+  surgeon: {
+    name: "Dr. Patricia Moore",
+    role: "Cardiothoracic Surgeon — Applying Medical Triage Logic",
+    emoji: "🩺",
+    badge: "TRIAGE LOGIC",
+    badgeColor: "#2a0a1a",
+    badgeText: "#f05ab4",
+    placeholder: "Ask the Non-Specialist a question...",
+    suggestions: [
+      "How would a doctor approach flood mitigation decisions?",
+      "What's your triage-based approach to the $22M budget?",
+      "How is flood risk similar to patient risk assessment?",
+      "Which projects would you prioritize and why?"
+    ],
+    system: `You are Dr. Patricia Moore, a highly experienced cardiothoracic surgeon. You have no background in engineering, urban planning, or flood management. However, you are highly analytical and apply the same logic you use in medical triage to any problem you face.
+
+Your approach mirrors hospital emergency department triage:
+- Stabilize the most critical patient (building/system) first
+- Use proven interventions over experimental ones
+- Work within strict resource constraints
+- Prioritize irreversible damage prevention over optimization
+- Assess severity by likelihood of failure AND consequence of failure
+
+You approach flood mitigation exactly as you would approach a mass casualty event:
+- Critical (immediate intervention needed): High flood zone + essential services + no redundancy
+- Serious (treat soon): High flood zone + residential + elderly/vulnerable population  
+- Fair (monitor): Moderate flood zone + commercial + redundant systems available
+- Minor (treat later): Low flood zone + modern construction + low occupancy
+
+Available mitigation projects if asked: River Levee System ($8M, 40% damage reduction), Coastal Seawall North ($6M, 33%), Upstream Retention Dam ($5M, 27%), Coastal Seawall South ($5M, 25%), Detention Basin East ($4M, 22%), Detention Basin West ($3M, 18%), Storm Drain Upgrade ($3M, 15%), Green Infrastructure ($2M, 12%), Permeable Pavement ($2M, 10%), Flood-Proof Critical Infra ($2M, 9%), Building Code Update ($1M, 8%), Early Warning System ($1M, 7%), Zoning Restriction A ($1M, 6%), Community Flood Training ($1M, 5%), Flood Insurance Subsidy ($1M, 4%). Total budget: $22M.
+
+Respond as Dr. Moore — intelligent, analytical, using medical analogies freely. Acknowledge when you encounter technical engineering concepts you don't fully understand (like Zone AE flood designations). Show your triage logic explicitly. Be honest about the limits of your domain expertise while still reaching confident conclusions through first-principles reasoning.`
+  }
+};
+
+let currentPersona = 'firechief';
+let conversationHistory = {};
+let isLoading = false;
+
+Object.keys(PERSONAS).forEach(k => conversationHistory[k] = []);
+
+function switchPersona(persona) {
+  currentPersona = persona;
+  document.querySelectorAll('.persona-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', Object.keys(PERSONAS)[i] === persona);
+  });
+
+  const p = PERSONAS[persona];
+  document.getElementById('personaAvatar').textContent = p.emoji;
+  document.getElementById('personaName').textContent = p.name;
+  document.getElementById('personaRole').textContent = p.role;
+  document.getElementById('personaBadge').textContent = p.badge;
+  document.getElementById('personaBadge').style.background = p.badgeColor;
+  document.getElementById('personaBadge').style.color = p.badgeText;
+  document.getElementById('userInput').placeholder = p.placeholder;
+  document.getElementById('welcomeName').textContent = p.name;
+
+  renderChat();
+  renderSuggestions();
+}
+
+function renderSuggestions() {
+  const p = PERSONAS[currentPersona];
+  const container = document.getElementById('suggestions');
+  if (conversationHistory[currentPersona].length > 0) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = p.suggestions.map(s =>
+    `<button class="suggestion-btn" onclick="useSuggestion('${s.replace(/'/g, "\\'")}')">${s}</button>`
+  ).join('');
+}
+
+function useSuggestion(text) {
+  document.getElementById('userInput').value = text;
+  sendMessage();
+}
+
+function renderChat() {
+  const container = document.getElementById('chatContainer');
+  const history = conversationHistory[currentPersona];
+
+  if (history.length === 0) {
+    container.innerHTML = `<div class="welcome-message" id="welcomeMsg">
+      <h3>Ask the Expert</h3>
+      <p>You are now speaking with <strong id="welcomeName">${PERSONAS[currentPersona].name}</strong>.<br>
+      Ask any question about flood mitigation, emergency response, or project prioritization for Bethlehem, PA.</p>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = history.map(msg => {
+    const isUser = msg.role === 'user';
+    const p = PERSONAS[currentPersona];
+    return `<div class="message ${isUser ? 'user' : 'assistant'}">
+      <div class="message-avatar" style="background:${isUser ? '#1a6fb5' : '#162433'}; border: 1px solid ${isUser ? '#1a6fb5' : '#1e3448'};">
+        ${isUser ? 'You' : p.emoji}
+      </div>
+      <div class="message-bubble">${formatMessage(msg.content)}</div>
+    </div>`;
+  }).join('');
+
+  container.scrollTop = container.scrollHeight;
+}
+
+function formatMessage(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+function addTypingIndicator() {
+  const container = document.getElementById('chatContainer');
+  const div = document.createElement('div');
+  div.className = 'message assistant';
+  div.id = 'typing';
+  div.innerHTML = `<div class="message-avatar" style="background:#162433; border:1px solid #1e3448;">${PERSONAS[currentPersona].emoji}</div>
+    <div class="message-bubble"><div class="typing-indicator">
+      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+    </div></div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendMessage() {
+  if (isLoading) return;
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('suggestions').innerHTML = '';
+
+  conversationHistory[currentPersona].push({ role: 'user', content: text });
+  renderChat();
+  addTypingIndicator();
+
+  try {
+    const p = PERSONAS[currentPersona];
+    const messages = conversationHistory[currentPersona].map(m => ({
+      role: m.role,
+      content: m.content
+    }));
+
+    const response = await fetch('https://floodsim-proxy.onrender.com/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: p.system,
+        messages: messages
+      })
+    });
+
+    const data = await response.json();
+    const reply = data.content?.[0]?.text || 'I apologize, I was unable to respond. Please try again.';
+
+    document.getElementById('typing')?.remove();
+    conversationHistory[currentPersona].push({ role: 'assistant', content: reply });
+    renderChat();
+
+  } catch (err) {
+    document.getElementById('typing')?.remove();
+    const container = document.getElementById('chatContainer');
+    const errDiv = document.createElement('div');
+    errDiv.className = 'error-notice';
+    errDiv.textContent = 'Connection error. Please check your internet connection and try again.';
+    container.appendChild(errDiv);
+    conversationHistory[currentPersona].pop();
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+document.getElementById('userInput').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+renderSuggestions();
+</script>
+</body>
+</html>
